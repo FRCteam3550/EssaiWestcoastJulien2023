@@ -23,10 +23,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Robot;
@@ -52,8 +49,6 @@ public final class BaseWestcoast extends SubsystemBase {
     public static final double K_A_VOLTS_SECONDES_CARRES_PAR_METRES = 0.36692;
     // Gain pour le contrôleur PID de WPILib (unités SI).
     public static final double K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI = 0.55913;
-    // Gain pour les unités du Talon FX.
-    public static final double K_P_VITESSE_VOLTS_100MS_PAR_COCHE_FALCON = 0.00076543;
     public static final double DIAMETRE_BASE_METRES = 0.77993 * Unites.METRE;
     public static final double VITESSE_MAX_METRES_PAR_SECONDES = 2;
     public static final double ACCELERATION_MAX_METRES_PAR_SECONDES_CARREES = 1;
@@ -90,7 +85,10 @@ public final class BaseWestcoast extends SubsystemBase {
         moteurDroit.setInverted(true);
         moteurGauche.setNeutralMode(NeutralMode.Brake);
         moteurDroit.setNeutralMode(NeutralMode.Brake);
+
         SmartDashboard.putData(this);
+
+        setDefaultCommand(piloter());
     }
 
     @Override
@@ -108,17 +106,19 @@ public final class BaseWestcoast extends SubsystemBase {
     }
 
     public Command piloter() {
-        return
-            new RunCommand(
-                () -> chassis.arcadeDrive(-modificateurVitesse * manette.getRightY(), -modificateurVitesse * manette.getRightX(), consigneQuadratique),
-                //() -> appliqueVoltage(-manette.getLeftY() * RobotController.getInputVoltage(), -manette.getRightY() * RobotController.getInputVoltage()),
-                this
+        return 
+            run(() -> 
+                chassis.arcadeDrive(
+                    -modificateurVitesse * manette.getRightY(),
+                    -modificateurVitesse * manette.getRightX(),
+                    consigneQuadratique
+                )
             )
             .andThen(chassis::stopMotor);
     }
 
     public Command trajectoireAuto() {
-        return Commands.runOnce(() -> {
+        return runOnce(() -> {
             var feedForward = new SimpleMotorFeedforward(
                 K_S_VOLTS,
                 K_V_VOLTS_SECONDES_PAR_METRES,
@@ -167,21 +167,21 @@ public final class BaseWestcoast extends SubsystemBase {
             );
     
             ramseteCommand.andThen(chassis::stopMotor).schedule();
-        }, this);
+        });
     }
 
     public Command passeEnModePrecis() {
-        return new InstantCommand(() -> {
+        return runOnce(() -> {
             modificateurVitesse = MODIFICATEUR_VITESSE_PRECIS;
             consigneQuadratique = false;
-        }, this);
+        });
     }
 
     public Command passeEnModeRapide() {
-        return new InstantCommand(() -> {
+        return runOnce(() -> {
             modificateurVitesse = MODIFICATEUR_VITESSE_RAPIDE;
             consigneQuadratique = true;
-        }, this);
+        });
     }
 
     private Rotation2d rotationRobot() {
@@ -236,18 +236,14 @@ public final class BaseWestcoast extends SubsystemBase {
         chassis.feed();
     }
 
-    /**
-     * Les données du controlleur PID sont par défaut en nb de coches de l'encodeur, ce qui n'est pas très facile à visualiser.
-     * On rajoute les données en mètres ici pour faciliter la calibration et le suivi.
-     */
     @Override
     public void initSendable(SendableBuilder builder) {
         super.initSendable(builder);
 
         builder.addDoubleProperty("positionMoteurGaucheMetres", this::positionMoteurGaucheMetres, null);
         builder.addDoubleProperty("positionMoteurDroitMetres", this::positionMoteurDroitMetres, null);
-        builder.addDoubleProperty("positionMoteurGaucheCoches", () -> capteursMoteurGauche.getIntegratedSensorPosition(), null);
-        builder.addDoubleProperty("positionMoteurDroitCoches", () -> capteursMoteurDroit.getIntegratedSensorPosition(), null);
+        builder.addDoubleProperty("positionMoteurGaucheCoches", capteursMoteurGauche::getIntegratedSensorPosition, null);
+        builder.addDoubleProperty("positionMoteurDroitCoches", capteursMoteurDroit::getIntegratedSensorPosition, null);
         builder.addDoubleProperty("angleGyro", () -> rotationRobot().getDegrees(), null);
         builder.addDoubleProperty("ajustementAngleGyro", navx::getAngleAdjustment, null);
     }

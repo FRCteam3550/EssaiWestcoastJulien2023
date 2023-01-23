@@ -8,6 +8,7 @@
     },
     "windows": {
       "/SmartDashboard/Field": {
+        "image": "C:\\Users\\Julien\\Documents\\Robotronix\\Installation 2023\\2023-field.png",
         "window": {
           "visible": true
         }

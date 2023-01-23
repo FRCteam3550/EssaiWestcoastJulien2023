@@ -21,7 +21,6 @@ public class RobotContainer {
 
   public RobotContainer() {
     configureButtonBindings();
-    basePilotable.setDefaultCommand(basePilotable.piloter());
   }
 
   private void configureButtonBindings() {
