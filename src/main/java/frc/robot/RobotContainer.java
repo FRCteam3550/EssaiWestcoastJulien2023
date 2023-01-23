@@ -14,7 +14,6 @@ public class RobotContainer {
   
   private final JoystickButton boutonBleuXNavigation = new JoystickButton(manetteNavigation, Button.kX.value);
   private final JoystickButton boutonJauneYNavigation = new JoystickButton(manetteNavigation, Button.kY.value);
-  private final JoystickButton boutonRougeBNavigation = new JoystickButton(manetteNavigation, Button.kB.value);
   private final JoystickButton boutonVertANavigation = new JoystickButton(manetteNavigation, Button.kA.value);
 
   // Sous systèmes
@@ -29,7 +28,6 @@ public class RobotContainer {
     boutonBleuXNavigation.onTrue(basePilotable.passeEnModePrecis());
     boutonJauneYNavigation.onTrue(basePilotable.passeEnModeRapide());
     boutonVertANavigation.onTrue(basePilotable.trajectoireAuto());
-//    boutonRougeBNavigation.onTrue(basePilotable.commandeRemetAZeroOdometrie());
   }
 
   public Command getAutonomousCommand() {

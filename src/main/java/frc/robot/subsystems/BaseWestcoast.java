@@ -6,18 +6,13 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonFXSensorCollection;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
-
-import org.photonvision.PhotonCamera;
-
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
@@ -28,19 +23,20 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import frc.robot.Robot;
+import frc.robot.subsystems.westcoast.Odometrie;
 import frc.robot.subsystems.westcoast.Simulation;
-import frc.robot.util.DashboardOdometrie;
-import frc.robot.util.Trajectoire;
 import frc.robot.util.Transmission;
 import frc.robot.util.Unites;
 
 public final class BaseWestcoast extends SubsystemBase {
-    private static final Pose2d POSITION_DEPART =  new Pose2d(8, 4, Rotation2d.fromDegrees(0));
+    private static final Pose2d POSITION_DEPART =  new Pose2d(2, 2, Rotation2d.fromDegrees(0));
 
     private static final long COCHES_ENCODEUR_PAR_ROTATION = 2048;
     private static final double DIAMETRE_ROUE_METRES = 4 * Unites.POUCE;
@@ -51,14 +47,14 @@ public final class BaseWestcoast extends SubsystemBase {
     private static final double MODIFICATEUR_VITESSE_PRECIS = 0.2 ;
     private static final double MODIFICATEUR_VITESSE_RAPIDE = 1.0;
 
-    public static final double K_S_VOLTS = 0.67057;
-    public static final double K_V_VOLTS_SECONDES_PAR_METRES = 1.7133;
-    public static final double K_A_VOLTS_SECONDES_CARRES_PAR_METRES = 0.46012;
+    public static final double K_S_VOLTS = 0.23112;
+    public static final double K_V_VOLTS_SECONDES_PAR_METRES = 1.7074;
+    public static final double K_A_VOLTS_SECONDES_CARRES_PAR_METRES = 0.36692;
     // Gain pour le contrôleur PID de WPILib (unités SI).
-    public static final double K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI = 2.5803;
+    public static final double K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI = 0.55913;
     // Gain pour les unités du Talon FX.
     public static final double K_P_VITESSE_VOLTS_100MS_PAR_COCHE_FALCON = 0.00076543;
-    public static final double DIAMETRE_BASE_METRES = 25 * Unites.POUCE;
+    public static final double DIAMETRE_BASE_METRES = 0.77993 * Unites.METRE;
     public static final double VITESSE_MAX_METRES_PAR_SECONDES = 2;
     public static final double ACCELERATION_MAX_METRES_PAR_SECONDES_CARREES = 1;
     public static final double K_RAMSETE_B = 2;
@@ -73,10 +69,9 @@ public final class BaseWestcoast extends SubsystemBase {
     // private final Transmission transmissionPuissante = new Transmission(COCHES_ENCODEUR_PAR_ROTATION, 1.0 / 15.0, DIAMETRE_ROUE_METRES);
     private Transmission transmissionActive = transmissionRapide;
     private final AHRS navx = new AHRS(SPI.Port.kMXP);
-    private final DifferentialDriveOdometry odometrie = new DifferentialDriveOdometry(rotationRobot(), positionMoteurGaucheMetres(), positionMoteurDroitMetres(), POSITION_DEPART);
     private final DifferentialDriveKinematics cinematiqueBase = new DifferentialDriveKinematics(DIAMETRE_BASE_METRES);
+    private final Odometrie odometrie = new Odometrie(rotationRobot(), positionMoteurGaucheMetres(), positionMoteurDroitMetres(), POSITION_DEPART, cinematiqueBase);
     private final XboxController manette;
-    private final PhotonCamera camera = new PhotonCamera("Microsoft_LifeCam_HD-3000");
 
     private double modificateurVitesse = MODIFICATEUR_VITESSE_PRECIS;
     private boolean consigneQuadratique = false;
@@ -86,8 +81,7 @@ public final class BaseWestcoast extends SubsystemBase {
         moteurDroit,
         () -> transmissionActive,
         DIAMETRE_ROUE_METRES,
-        DIAMETRE_BASE_METRES,
-        odometrie::getPoseMeters
+        DIAMETRE_BASE_METRES
     );
 
     public BaseWestcoast(XboxController manette) {
@@ -97,7 +91,6 @@ public final class BaseWestcoast extends SubsystemBase {
         moteurGauche.setNeutralMode(NeutralMode.Brake);
         moteurDroit.setNeutralMode(NeutralMode.Brake);
         SmartDashboard.putData(this);
-        SmartDashboard.putData(new DashboardOdometrie(odometrie));
     }
 
     @Override
@@ -105,7 +98,7 @@ public final class BaseWestcoast extends SubsystemBase {
         odometrie.update(
             rotationRobot(),
             positionMoteurGaucheMetres(), 
-            positionMoteurDroitMetres()
+            -positionMoteurDroitMetres()
         );
     }
 
@@ -117,7 +110,7 @@ public final class BaseWestcoast extends SubsystemBase {
     public Command piloter() {
         return
             new RunCommand(
-                () -> chassis.arcadeDrive(-modificateurVitesse * manette.getLeftY(), modificateurVitesse * manette.getRightX(), consigneQuadratique),
+                () -> chassis.arcadeDrive(-modificateurVitesse * manette.getRightY(), -modificateurVitesse * manette.getRightX(), consigneQuadratique),
                 //() -> appliqueVoltage(-manette.getLeftY() * RobotController.getInputVoltage(), -manette.getRightY() * RobotController.getInputVoltage()),
                 this
             )
@@ -125,55 +118,56 @@ public final class BaseWestcoast extends SubsystemBase {
     }
 
     public Command trajectoireAuto() {
-        // Create a voltage constraint to ensure we don't accelerate too fast
-        var contrainteVoltage =
-            new DifferentialDriveVoltageConstraint(
-                new SimpleMotorFeedforward(
-                    K_S_VOLTS,
-                    K_V_VOLTS_SECONDES_PAR_METRES,
-                    K_A_VOLTS_SECONDES_CARRES_PAR_METRES
-                ),
-                cinematiqueBase,
-                10
-            );
-
-        // Create config for trajectory
-        var configurationTrajectoire =
-            new TrajectoryConfig(
-                VITESSE_MAX_METRES_PAR_SECONDES,
-                ACCELERATION_MAX_METRES_PAR_SECONDES_CARREES
-            )
-            // Add kinematics to ensure max speed is actually obeyed
-            .setKinematics(cinematiqueBase)
-            // Apply the voltage constraint
-            .addConstraint(contrainteVoltage);
-
-        var trajectory =
-            new Trajectoire(odometrie.getPoseMeters())
-                .avance(0.5)
-                .avance(0.5)
-                .finalise(configurationTrajectoire);
-
-        var ramseteCommand = new RamseteCommand(
-            trajectory,
-            odometrie::getPoseMeters,
-            new RamseteController(K_RAMSETE_B, K_RAMSETE_ZETA),
-            new SimpleMotorFeedforward(
+        return Commands.runOnce(() -> {
+            var feedForward = new SimpleMotorFeedforward(
                 K_S_VOLTS,
                 K_V_VOLTS_SECONDES_PAR_METRES,
                 K_A_VOLTS_SECONDES_CARRES_PAR_METRES
-            ),
-            cinematiqueBase,
-            this::vitesseRouesMetresParSeconde,
-            new PIDController(K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI, 0, 0),
-            new PIDController(K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI, 0, 0),
-            // RamseteCommand passes volts to the callback
-            this::appliqueVoltage,
-            this
-        );
-
-        // Run path following command, then stop at the end.
-        return ramseteCommand.andThen(chassis::stopMotor);        
+            );
+    
+            var contrainteVoltage =
+                new DifferentialDriveVoltageConstraint(
+                    feedForward,
+                    cinematiqueBase,
+                    10
+                );
+    
+            var configurationTrajectoire =
+                new TrajectoryConfig(
+                    VITESSE_MAX_METRES_PAR_SECONDES,
+                    ACCELERATION_MAX_METRES_PAR_SECONDES_CARREES
+                )
+                .setKinematics(cinematiqueBase)
+                .addConstraint(contrainteVoltage);
+    
+            var trajectoireReferenceRobot = TrajectoryGenerator.generateTrajectory(
+                new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+                List.of(
+                    new Translation2d(1, 1),
+                    new Translation2d(2, -1)
+                ),
+                new Pose2d(3, 0, Rotation2d.fromDegrees(0)),
+                configurationTrajectoire
+            );
+    
+            var trajectoireReferenceTerrain = trajectoireReferenceRobot
+                .transformBy(odometrie.getPoseMeters().minus(trajectoireReferenceRobot.getInitialPose()));
+    
+            var ramseteCommand = new RamseteCommand(
+                trajectoireReferenceTerrain,
+                odometrie::getPoseMeters,
+                new RamseteController(K_RAMSETE_B, K_RAMSETE_ZETA),
+                feedForward,
+                cinematiqueBase,
+                this::vitesseRouesMetresParSeconde,
+                new PIDController(K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI, 0, 0),
+                new PIDController(K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI, 0, 0),
+                this::appliqueVoltage,
+                this
+            );
+    
+            ramseteCommand.andThen(chassis::stopMotor).schedule();
+        }, this);
     }
 
     public Command passeEnModePrecis() {
@@ -193,7 +187,8 @@ public final class BaseWestcoast extends SubsystemBase {
     private Rotation2d rotationRobot() {
         if (Robot.isReal()) {
             return navx.getRotation2d();
-        } else if (sim != null ) {
+        }
+        else if (sim != null ) {
             return sim.rotationRobot();
         }
         return POSITION_DEPART.getRotation();
@@ -202,7 +197,8 @@ public final class BaseWestcoast extends SubsystemBase {
     private double positionMoteurGaucheMetres() {
         if (Robot.isReal()) {
             return transmissionActive.distanceMetresPourCoches(capteursMoteurGauche.getIntegratedSensorPosition());
-        } else if (sim != null) {
+        }
+        else if (sim != null) {
             return sim.positionMoteurGaucheMetres();
         }
         return 0;
@@ -211,7 +207,8 @@ public final class BaseWestcoast extends SubsystemBase {
     private double positionMoteurDroitMetres() {
         if (Robot.isReal()) {
             return transmissionActive.distanceMetresPourCoches(capteursMoteurDroit.getIntegratedSensorPosition());
-        } else if (sim != null) {
+        }
+        else if (sim != null) {
             return sim.positionMoteurDroitMetres();
         }
         return 0;
@@ -237,16 +234,6 @@ public final class BaseWestcoast extends SubsystemBase {
         moteurGauche.setVoltage(moteurGaucheVolts);
         moteurDroit.setVoltage(moteurDroitVolts);
         chassis.feed();
-    }
-
-    private void remetAZeroOdometrie(Pose2d pose) {
-        odometrie.resetPosition(rotationRobot(), positionMoteurGaucheMetres(), positionMoteurDroitMetres(), pose);
-    }
-
-    public Command commandeRemetAZeroOdometrie() {
-        return new InstantCommand(() -> {
-            remetAZeroOdometrie(new Pose2d(0, 0, Rotation2d.fromDegrees(0)));
-        }, this);
     }
 
     /**
