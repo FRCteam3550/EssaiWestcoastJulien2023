@@ -36,7 +36,7 @@ public final class BaseWestcoast extends SubsystemBase {
     private static final Pose2d POSITION_DEPART =  new Pose2d(2, 2, Rotation2d.fromDegrees(0));
 
     private static final long COCHES_ENCODEUR_PAR_ROTATION = 2048;
-    private static final double DIAMETRE_ROUE_METRES = 4 * Unites.POUCE;
+    private static final double DIAMETRE_ROUE_METRES = 0.1017 * Unites.METRE; // Circonférence: 0.3195
 
     private static final int NO_CAN_MOTEUR_AVANT_GAUCHE = 4;
     private static final int NO_CAN_MOTEUR_AVANT_DROIT = 2;
@@ -44,11 +44,12 @@ public final class BaseWestcoast extends SubsystemBase {
     private static final double MODIFICATEUR_VITESSE_PRECIS = 0.2 ;
     private static final double MODIFICATEUR_VITESSE_RAPIDE = 1.0;
 
-    public static final double K_S_VOLTS = 0.23112;
-    public static final double K_V_VOLTS_SECONDES_PAR_METRES = 1.7074;
-    public static final double K_A_VOLTS_SECONDES_CARRES_PAR_METRES = 0.36692;
+    // Voir résultats caractérisation: https://docs.google.com/spreadsheets/d/1WEG3WhIzJu3VFnJeH4EQ7ALOVoR8XWWcQZ5B1EWVP3w/edit?usp=sharing
+    public static final double K_S_VOLTS = 0.24;
+    public static final double K_V_VOLTS_SECONDES_PAR_METRES = 1.65;
+    public static final double K_A_VOLTS_SECONDES_CARRES_PAR_METRES = 0.45;
     // Gain pour le contrôleur PID de WPILib (unités SI).
-    public static final double K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI = 0.55913;
+    public static final double K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI = 0.6;
     public static final double DIAMETRE_BASE_METRES = 0.77993 * Unites.METRE;
     public static final double VITESSE_MAX_METRES_PAR_SECONDES = 2;
     public static final double ACCELERATION_MAX_METRES_PAR_SECONDES_CARREES = 1;
