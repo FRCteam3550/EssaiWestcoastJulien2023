@@ -11,101 +11,10 @@
         "vgap": 16.0,
         "titleType": 0,
         "tiles": {
-          "0,0": {
+          "3,0": {
             "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/BaseWestcoast/positionMoteurDroitMetres",
-              "_title": "/SmartDashboard/BaseWestcoast/positionMoteurDroitMetres",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "0,1": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/BaseWestcoast/positionMoteurGaucheMetres",
-              "_title": "/SmartDashboard/BaseWestcoast/positionMoteurGaucheMetres",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "0,2": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/BaseWestcoast/angleGyro",
-              "_title": "/SmartDashboard/BaseWestcoast/angleGyro",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "0,3": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/BaseWestcoast/ajustementAngleGyro",
-              "_title": "/SmartDashboard/BaseWestcoast/ajustementAngleGyro",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "1,0": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Odometrie/xMetres",
-              "_title": "/SmartDashboard/Odometrie/xMetres",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "1,1": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Odometrie/yMetres",
-              "_title": "/SmartDashboard/Odometrie/yMetres",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "1,2": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Odometrie/angleDegres",
-              "_title": "/SmartDashboard/Odometrie/angleDegres",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "2,0": {
-            "size": [
-              7,
-              4
+              5,
+              3
             ],
             "content": {
               "_type": "Field",
@@ -118,67 +27,117 @@
               "Visuals/Show Outside Circles": false
             }
           },
-          "1,3": {
+          "1,0": {
             "size": [
-              1,
-              1
+              2,
+              5
             ],
             "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Odometrie/tempsDernierEstimeCamera",
-              "_title": "/SmartDashboard/Odometrie/tempsDernierEstimeCamera",
-              "_glyph": 148,
-              "_showGlyph": false
+              "_type": "Subsystem Layout",
+              "_title": "Odométrie",
+              "_glyph": 149,
+              "_showGlyph": false,
+              "Layout/Label position": "BOTTOM",
+              "_children": [
+                {
+                  "_type": "Text View",
+                  "_source0": "network_table:///SmartDashboard/Odometrie/xMetres",
+                  "_title": "x (m)",
+                  "_glyph": 148,
+                  "_showGlyph": false
+                },
+                {
+                  "_type": "Text View",
+                  "_source0": "network_table:///SmartDashboard/Odometrie/yMetres",
+                  "_title": "y (m)",
+                  "_glyph": 148,
+                  "_showGlyph": false
+                },
+                {
+                  "_type": "Text View",
+                  "_source0": "network_table:///SmartDashboard/Odometrie/angleDegres",
+                  "_title": "angle (°)",
+                  "_glyph": 148,
+                  "_showGlyph": false
+                },
+                {
+                  "_type": "Graph",
+                  "_source0": "network_table:///SmartDashboard/Odometrie/diffDistance",
+                  "_title": "diff",
+                  "_glyph": 148,
+                  "_showGlyph": true,
+                  "Graph/Visible time": 30.0,
+                  "Graph/X-axis auto scrolling": true,
+                  "Y-axis/Automatic bounds": true,
+                  "Y-axis/Upper bound": 1.0,
+                  "Y-axis/Lower bound": -1.0,
+                  "Y-axis/Unit": "m",
+                  "Visible data/SmartDashboard/Odometrie/diffDistance": true
+                },
+                {
+                  "_type": "Boolean Box",
+                  "_source0": "network_table:///SmartDashboard/Odometrie/positionSecuritaire",
+                  "_title": "pos securitaire",
+                  "_glyph": 148,
+                  "_showGlyph": false,
+                  "Colors/Color when true": "#7CFC00FF",
+                  "Colors/Color when false": "#8B0000FF"
+                }
+              ]
             }
           },
-          "9,0": {
+          "0,0": {
             "size": [
               1,
-              1
+              4
             ],
             "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Odometrie/diffDistance",
-              "_title": "/SmartDashboard/Odometrie/diffDistance",
-              "_glyph": 148,
-              "_showGlyph": false
+              "_type": "Subsystem Layout",
+              "_title": "Base",
+              "_glyph": 149,
+              "_showGlyph": false,
+              "Layout/Label position": "BOTTOM",
+              "_children": [
+                {
+                  "_type": "Text View",
+                  "_source0": "network_table:///SmartDashboard/BaseWestcoast/positionMoteurGaucheMetres",
+                  "_title": "pos mot gauche (m)",
+                  "_glyph": 148,
+                  "_showGlyph": false
+                },
+                {
+                  "_type": "Text View",
+                  "_source0": "network_table:///SmartDashboard/BaseWestcoast/positionMoteurDroitMetres",
+                  "_title": "/SmartDashboard/BaseWestcoast/positionMoteurDroitMetres",
+                  "_glyph": 148,
+                  "_showGlyph": false
+                },
+                {
+                  "_type": "Text View",
+                  "_source0": "network_table:///SmartDashboard/BaseWestcoast/angleGyro",
+                  "_title": "angle gyro (°)",
+                  "_glyph": 148,
+                  "_showGlyph": false
+                },
+                {
+                  "_type": "Text View",
+                  "_source0": "network_table:///SmartDashboard/BaseWestcoast/ajustementAngleGyro",
+                  "_title": "ajustement gyro (°)",
+                  "_glyph": 148,
+                  "_showGlyph": false
+                }
+              ]
             }
           },
-          "9,2": {
+          "3,3": {
             "size": [
-              1,
+              2,
               1
             ],
             "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Odometrie/maxDiffDistance",
-              "_title": "/SmartDashboard/Odometrie/maxDiffDistance",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "9,3": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Odometrie/dateMaxDiff",
-              "_title": "/SmartDashboard/Odometrie/dateMaxDiff",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "9,1": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Odometrie/dateDiff",
-              "_title": "/SmartDashboard/Odometrie/dateDiff",
+              "_type": "Basic Subsystem",
+              "_source0": "network_table:///SmartDashboard/BaseWestcoast",
+              "_title": "BaseWestcoast",
               "_glyph": 148,
               "_showGlyph": false
             }
@@ -201,9 +160,9 @@
     }
   ],
   "windowGeometry": {
-    "x": -1535.199951171875,
-    "y": 1208.800048828125,
-    "width": 1534.4000244140625,
-    "height": 814.4000244140625
+    "x": -1543.199951171875,
+    "y": 1200.800048828125,
+    "width": 1550.4000244140625,
+    "height": 830.4000244140625
   }
 }

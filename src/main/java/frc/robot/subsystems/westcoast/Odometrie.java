@@ -1,6 +1,5 @@
 package frc.robot.subsystems.westcoast;
 
-import java.util.Date;
 import java.util.List;
 
 import org.photonvision.PhotonCamera;
@@ -20,6 +19,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -44,11 +44,8 @@ public class Odometrie implements Sendable {
     );
     private final DifferentialDrivePoseEstimator estimateurPositionEtat;
     private Pose2d dernierEstime = new Pose2d();
-    private double tempsDernierEstimeCamera = 0;
     private double diffDistance = 0;
-    private String dateDiff = "";
-    private double maxDiffDistance = 0;
-    private String dateMaxDiff = "";
+    private Timer dernierEstimeCamera = new Timer();
 
     public Odometrie(
         Rotation2d rotationRobot,
@@ -61,6 +58,9 @@ public class Odometrie implements Sendable {
         SendableRegistry.add(this, "Odometrie");
         SmartDashboard.putData(this);
         SmartDashboard.putData(terrain);
+
+        dernierEstimeCamera.reset();
+        dernierEstimeCamera.start();
     }
 
     public void update(Rotation2d rotationRobot, double positionMoteurGaucheMetres, double positionMoteurDroitMetres) {
@@ -76,16 +76,12 @@ public class Odometrie implements Sendable {
         if (optionEstimation.isPresent() && optionEstimation.get().estimatedPose != null) {
             var estimation = optionEstimation.get();
             estimateurPositionEtat.addVisionMeasurement(estimation.estimatedPose.toPose2d(), estimation.timestampSeconds);
-            tempsDernierEstimeCamera = estimation.timestampSeconds;
             
+            dernierEstimeCamera.reset();
+            dernierEstimeCamera.start();
             var estimeAvecCamera = estimateurPositionEtat.getEstimatedPosition();
             var diff = estimeAvecCamera.minus(estimeSansCamera);
             diffDistance = Math.sqrt(diff.getX()*diff.getX() + diff.getY()*diff.getY());
-            dateDiff = new Date().toString();
-            if (diffDistance > maxDiffDistance) {
-                maxDiffDistance = diffDistance;
-                dateMaxDiff = dateDiff;
-            }
         }
 
         dernierEstime = estimateurPositionEtat.getEstimatedPosition();
@@ -103,11 +99,8 @@ public class Odometrie implements Sendable {
         builder.addDoubleProperty("xMetres", () -> this.dernierEstime.getX(), null);
         builder.addDoubleProperty("yMetres", () -> this.dernierEstime.getY(), null);
         builder.addDoubleProperty("angleDegres", () -> dernierEstime.getRotation().getDegrees(), null);
-        builder.addDoubleProperty("tempsDernierEstimeCamera", () -> this.tempsDernierEstimeCamera, null);
         builder.addDoubleProperty("diffDistance", () -> this.diffDistance, null);
-        builder.addDoubleProperty("maxDiffDistance", () -> this.maxDiffDistance, null);
-        builder.addStringProperty("dateDiff", () -> this.dateDiff, null);
-        builder.addStringProperty("dateMaxDiff", () -> this.dateMaxDiff, null);
+        builder.addBooleanProperty("positionSecuritaire", () -> this.dernierEstimeCamera.get() < 10, null);
     }
 }
  

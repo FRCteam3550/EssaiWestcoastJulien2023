@@ -115,7 +115,8 @@ public final class BaseWestcoast extends SubsystemBase {
                     consigneQuadratique
                 )
             )
-            .andThen(chassis::stopMotor);
+            .andThen(chassis::stopMotor)
+            .withName("piloter");
     }
 
     public Command trajectoireAuto() {
@@ -168,7 +169,7 @@ public final class BaseWestcoast extends SubsystemBase {
             );
     
             ramseteCommand.andThen(chassis::stopMotor).schedule();
-        });
+        }).withName("trajectoireAuto");
     }
 
     public Command passeEnModePrecis() {
