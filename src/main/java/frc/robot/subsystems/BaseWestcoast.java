@@ -5,13 +5,13 @@ import java.util.List;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonFXSensorCollection;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
@@ -45,17 +45,18 @@ public final class BaseWestcoast extends SubsystemBase {
     private static final double MODIFICATEUR_VITESSE_RAPIDE = 1.0;
 
     // Voir résultats caractérisation: https://docs.google.com/spreadsheets/d/1WEG3WhIzJu3VFnJeH4EQ7ALOVoR8XWWcQZ5B1EWVP3w/edit?usp=sharing
-    public static final double K_S_VOLTS = 0.24;
+    public static final double K_S_VOLTS = 0.24; // Mesurée: 0.24
     public static final double K_V_VOLTS_SECONDES_PAR_METRES = 1.65;
     public static final double K_A_VOLTS_SECONDES_CARRES_PAR_METRES = 0.45;
     // Gain pour le contrôleur PID de WPILib (unités SI).
-    public static final double K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI = 0.6;
+    public static final double K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI = 2.3; // Mesurée: 2.3
     public static final double DIAMETRE_BASE_METRES = 0.77993 * Unites.METRE;
     public static final double VITESSE_MAX_METRES_PAR_SECONDES = 2;
     public static final double ACCELERATION_MAX_METRES_PAR_SECONDES_CARREES = 1;
-    public static final double K_RAMSETE_B = 2;
-    public static final double K_RAMSETE_ZETA = 0.7;
+    public static final double K_RAMSETE_B = 2; // Defaut: 2
+    public static final double K_RAMSETE_ZETA = 0.7; // Defaut: 0.7
 
+    private final AHRS navx = newNavx();
     private final WPI_TalonFX moteurGauche = new WPI_TalonFX(NO_CAN_MOTEUR_AVANT_GAUCHE);
     private final TalonFXSensorCollection capteursMoteurGauche = moteurGauche.getSensorCollection();
     private final WPI_TalonFX moteurDroit = new WPI_TalonFX(NO_CAN_MOTEUR_AVANT_DROIT);
@@ -64,9 +65,9 @@ public final class BaseWestcoast extends SubsystemBase {
     private final Transmission transmissionRapide = new Transmission(COCHES_ENCODEUR_PAR_ROTATION, 1.0 / 5.13, DIAMETRE_ROUE_METRES);
     // private final Transmission transmissionPuissante = new Transmission(COCHES_ENCODEUR_PAR_ROTATION, 1.0 / 15.0, DIAMETRE_ROUE_METRES);
     private Transmission transmissionActive = transmissionRapide;
-    private final AHRS navx = new AHRS(SPI.Port.kMXP);
     private final DifferentialDriveKinematics cinematiqueBase = new DifferentialDriveKinematics(DIAMETRE_BASE_METRES);
-    private final Odometrie odometrie = new Odometrie(rotationRobot(), positionMoteurGaucheMetres(), positionMoteurDroitMetres(), POSITION_DEPART, cinematiqueBase);
+    private final Rotation2d rotationInitiale = navx.getRotation2d();
+    private final Odometrie odometrie = new Odometrie(rotationInitiale, positionMoteurGaucheMetres(), positionMoteurDroitMetres(), POSITION_DEPART, cinematiqueBase);
     private final XboxController manette;
 
     private double modificateurVitesse = MODIFICATEUR_VITESSE_PRECIS;
@@ -80,24 +81,50 @@ public final class BaseWestcoast extends SubsystemBase {
         DIAMETRE_BASE_METRES
     );
 
+
     public BaseWestcoast(XboxController manette) {
         this.manette = manette;
 
         moteurDroit.setInverted(true);
         moteurGauche.setNeutralMode(NeutralMode.Brake);
         moteurDroit.setNeutralMode(NeutralMode.Brake);
+        moteurGauche.configVelocityMeasurementPeriod(SensorVelocityMeasPeriod.Period_1Ms);
+        moteurDroit.configVelocityMeasurementPeriod(SensorVelocityMeasPeriod.Period_1Ms);
+        moteurGauche.configVelocityMeasurementWindow(1);
+        moteurDroit.configVelocityMeasurementWindow(1);
 
         SmartDashboard.putData(this);
 
         setDefaultCommand(piloter());
     }
 
+    /*
+     * Lorsque nouvellement initialisé, le navx donne un angle de 0 pendant plusieurs cycles de mesures au lieu de la vraie valeur.
+     * Or, il faut la vraie valeur pour initialiser l'odométrie. Je n'ai pas trouvé de méthode m'indiquant que l'initialisation est
+     * terminée, donc j'attends jusqu'à ce qu'une valeur différente de 0 apparaisse.
+     */
+    private static AHRS newNavx() {
+        var navx = new AHRS(SPI.Port.kMXP);
+
+        if (Robot.isReal()) {
+            while (Math.abs(navx.getYaw()) < 0.0001) {
+                try {
+                    Thread.sleep(20);
+                }
+                catch(InterruptedException ie) {
+                    // Do nothing.
+                }
+            }
+        }
+        return navx;
+    }
+    
     @Override
     public void periodic() {
         odometrie.update(
             rotationRobot(),
             positionMoteurGaucheMetres(), 
-            -positionMoteurDroitMetres()
+            positionMoteurDroitMetres()
         );
     }
 
@@ -142,16 +169,24 @@ public final class BaseWestcoast extends SubsystemBase {
                 .setKinematics(cinematiqueBase)
                 .addConstraint(contrainteVoltage);
     
+            // var trajectoireReferenceRobot = TrajectoryGenerator.generateTrajectory(
+            //     new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+            //     List.of(
+            //         new Translation2d(1, 0.5),
+            //         new Translation2d(2, -0.5)
+            //     ),
+            //     new Pose2d(3, 0, Rotation2d.fromDegrees(0)),
+            //     configurationTrajectoire
+            // );
+    
             var trajectoireReferenceRobot = TrajectoryGenerator.generateTrajectory(
                 new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
                 List.of(
-                    new Translation2d(1, 1),
-                    new Translation2d(2, -1)
                 ),
-                new Pose2d(3, 0, Rotation2d.fromDegrees(0)),
+                new Pose2d(1.2, 0, Rotation2d.fromDegrees(0)),
                 configurationTrajectoire
             );
-    
+
             var trajectoireReferenceTerrain = trajectoireReferenceRobot
                 .transformBy(odometrie.getPoseMeters().minus(trajectoireReferenceRobot.getInitialPose()));
     
@@ -188,7 +223,8 @@ public final class BaseWestcoast extends SubsystemBase {
 
     private Rotation2d rotationRobot() {
         if (Robot.isReal()) {
-            return navx.getRotation2d();
+            // navx.getRotation2d() is continuous and not in the [-180, +180] range
+            return Rotation2d.fromDegrees(-navx.getYaw());
         }
         else if (sim != null ) {
             return sim.rotationRobot();
@@ -196,6 +232,7 @@ public final class BaseWestcoast extends SubsystemBase {
         return POSITION_DEPART.getRotation();
     }
 
+    // Avancer = valeurs positives
     private double positionMoteurGaucheMetres() {
         if (Robot.isReal()) {
             return transmissionActive.distanceMetresPourCoches(capteursMoteurGauche.getIntegratedSensorPosition());
@@ -206,9 +243,10 @@ public final class BaseWestcoast extends SubsystemBase {
         return 0;
     }
 
+    // Avancer = valeurs positives
     private double positionMoteurDroitMetres() {
         if (Robot.isReal()) {
-            return transmissionActive.distanceMetresPourCoches(capteursMoteurDroit.getIntegratedSensorPosition());
+            return transmissionActive.distanceMetresPourCoches(-capteursMoteurDroit.getIntegratedSensorPosition());
         }
         else if (sim != null) {
             return sim.positionMoteurDroitMetres();
@@ -240,13 +278,16 @@ public final class BaseWestcoast extends SubsystemBase {
 
     @Override
     public void initSendable(SendableBuilder builder) {
-        super.initSendable(builder);
+        //super.initSendable(builder);
 
         builder.addDoubleProperty("positionMoteurGaucheMetres", this::positionMoteurGaucheMetres, null);
         builder.addDoubleProperty("positionMoteurDroitMetres", this::positionMoteurDroitMetres, null);
-        builder.addDoubleProperty("positionMoteurGaucheCoches", capteursMoteurGauche::getIntegratedSensorPosition, null);
-        builder.addDoubleProperty("positionMoteurDroitCoches", capteursMoteurDroit::getIntegratedSensorPosition, null);
+        // builder.addDoubleProperty("positionMoteurGaucheCoches", capteursMoteurGauche::getIntegratedSensorPosition, null);
+        // builder.addDoubleProperty("positionMoteurDroitCoches", capteursMoteurDroit::getIntegratedSensorPosition, null);
         builder.addDoubleProperty("angleGyro", () -> rotationRobot().getDegrees(), null);
         builder.addDoubleProperty("ajustementAngleGyro", navx::getAngleAdjustment, null);
+        //builder.addDoubleProperty("rotInit", () -> this.rotationInitiale.getDegrees(), null);
+        builder.addDoubleProperty("voltMotGauche", () -> moteurGauche.getMotorOutputVoltage(), null);
+        // builder.addDoubleProperty("voltMotDroit", () -> moteurDroit.getMotorOutputVoltage(), null);
     }
 }

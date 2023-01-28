@@ -26,14 +26,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Odometrie implements Sendable {
     private final Field2d terrain = new Field2d();
     private final AprilTagFieldLayout dispositionTerrain = new AprilTagFieldLayout(List.of(
-        new AprilTag(0, new Pose3d(2, 4.4, 0.8, new Rotation3d(0, 0, Math.toRadians(-90))))),
+        new AprilTag(0, new Pose3d(1.73, 4.4, 0.8, new Rotation3d(0, 0, Math.toRadians(-90))))),
         4.5,
         4.4
     );
     //private final AprilTagFieldLayout dispositionTerrain = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
     private final PhotonCamera camera = new PhotonCamera("Microsoft_LifeCam_HD-3000");
     private final Transform3d robotACamera = new Transform3d(
-        new Translation3d(0.5, 0.0, 0.2),
+        new Translation3d(0.523, 0.258 , 0.401),
         new Rotation3d(0,0,0)
     ); // TODO: à mesurer
     private final PhotonPoseEstimator estimateurPositionCamera = new PhotonPoseEstimator(
@@ -63,26 +63,27 @@ public class Odometrie implements Sendable {
         dernierEstimeCamera.start();
     }
 
+    // Positive values are going forward 
     public void update(Rotation2d rotationRobot, double positionMoteurGaucheMetres, double positionMoteurDroitMetres) {
         estimateurPositionEtat.update(
             rotationRobot,
             positionMoteurGaucheMetres, 
-            -positionMoteurDroitMetres
+            positionMoteurDroitMetres
         );
         var estimeSansCamera = estimateurPositionEtat.getEstimatedPosition();
-        estimateurPositionCamera.setReferencePose(estimeSansCamera);
+        // estimateurPositionCamera.setReferencePose(estimeSansCamera);
 
-        var optionEstimation = estimateurPositionCamera.update();
-        if (optionEstimation.isPresent() && optionEstimation.get().estimatedPose != null) {
-            var estimation = optionEstimation.get();
-            estimateurPositionEtat.addVisionMeasurement(estimation.estimatedPose.toPose2d(), estimation.timestampSeconds);
+        // var optionEstimation = estimateurPositionCamera.update();
+        // if (optionEstimation.isPresent() && optionEstimation.get().estimatedPose != null) {
+        //     var estimation = optionEstimation.get();
+        //     estimateurPositionEtat.addVisionMeasurement(estimation.estimatedPose.toPose2d(), estimation.timestampSeconds);
             
-            dernierEstimeCamera.reset();
-            dernierEstimeCamera.start();
-            var estimeAvecCamera = estimateurPositionEtat.getEstimatedPosition();
-            var diff = estimeAvecCamera.minus(estimeSansCamera);
-            diffDistance = Math.sqrt(diff.getX()*diff.getX() + diff.getY()*diff.getY());
-        }
+        //     dernierEstimeCamera.reset();
+        //     dernierEstimeCamera.start();
+        //     var estimeAvecCamera = estimateurPositionEtat.getEstimatedPosition();
+        //     var diff = estimeAvecCamera.minus(estimeSansCamera);
+        //     diffDistance = Math.sqrt(diff.getX()*diff.getX() + diff.getY()*diff.getY());
+        // }
 
         dernierEstime = estimateurPositionEtat.getEstimatedPosition();
         terrain.setRobotPose(dernierEstime);
