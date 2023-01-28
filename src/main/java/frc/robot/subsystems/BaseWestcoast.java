@@ -12,6 +12,7 @@ import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
@@ -49,9 +50,9 @@ public final class BaseWestcoast extends SubsystemBase {
     public static final double K_V_VOLTS_SECONDES_PAR_METRES = 1.65;
     public static final double K_A_VOLTS_SECONDES_CARRES_PAR_METRES = 0.45;
     // Gain pour le contrôleur PID de WPILib (unités SI).
-    public static final double K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI = 2.3; // Mesurée: 2.3
+    public static final double K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI = 2.3; // Mesurée: 0.68 ou 2.3
     public static final double DIAMETRE_BASE_METRES = 0.77993 * Unites.METRE;
-    public static final double VITESSE_MAX_METRES_PAR_SECONDES = 2;
+    public static final double VITESSE_MAX_METRES_PAR_SECONDES = 3;
     public static final double ACCELERATION_MAX_METRES_PAR_SECONDES_CARREES = 1;
     public static final double K_RAMSETE_B = 2; // Defaut: 2
     public static final double K_RAMSETE_ZETA = 0.7; // Defaut: 0.7
@@ -66,12 +67,15 @@ public final class BaseWestcoast extends SubsystemBase {
     // private final Transmission transmissionPuissante = new Transmission(COCHES_ENCODEUR_PAR_ROTATION, 1.0 / 15.0, DIAMETRE_ROUE_METRES);
     private Transmission transmissionActive = transmissionRapide;
     private final DifferentialDriveKinematics cinematiqueBase = new DifferentialDriveKinematics(DIAMETRE_BASE_METRES);
-    private final Rotation2d rotationInitiale = navx.getRotation2d();
-    private final Odometrie odometrie = new Odometrie(rotationInitiale, positionMoteurGaucheMetres(), positionMoteurDroitMetres(), POSITION_DEPART, cinematiqueBase);
+    private final Odometrie odometrie = new Odometrie(rotationRobot(), positionMoteurGaucheMetres(), positionMoteurDroitMetres(), POSITION_DEPART, cinematiqueBase);
     private final XboxController manette;
 
     private double modificateurVitesse = MODIFICATEUR_VITESSE_PRECIS;
     private boolean consigneQuadratique = false;
+    private double derniereVitesseGaucheMetresSeconde = 0;
+    private double consigneVitesseGaucheMetresSeconde = 0;
+    private double derniereVitesseDroiteMetresSeconde = 0;
+    private double consigneVitesseDroiteMetresSeconde = 0;
 
     private final Simulation sim = new Simulation(
         moteurGauche,
@@ -169,37 +173,51 @@ public final class BaseWestcoast extends SubsystemBase {
                 .setKinematics(cinematiqueBase)
                 .addConstraint(contrainteVoltage);
     
+            // var cibleRobot = new Pose2d(1.5, 0, Rotation2d.fromDegrees(0));
             // var trajectoireReferenceRobot = TrajectoryGenerator.generateTrajectory(
             //     new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             //     List.of(
-            //         new Translation2d(1, 0.5),
-            //         new Translation2d(2, -0.5)
+            //         // new Translation2d(1, 0.2),
+            //         // new Translation2d(1.5, 0)
             //     ),
-            //     new Pose2d(3, 0, Rotation2d.fromDegrees(0)),
+            //     cibleRobot,
             //     configurationTrajectoire
             // );
     
-            var trajectoireReferenceRobot = TrajectoryGenerator.generateTrajectory(
-                new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+            // var cibleRobot = new Pose2d(1.2, 0, Rotation2d.fromDegrees(0));
+            var trajectoireReferenceTerrain = TrajectoryGenerator.generateTrajectory(
+                odometrie.getPoseMeters(),
                 List.of(
                 ),
-                new Pose2d(1.2, 0, Rotation2d.fromDegrees(0)),
+                new Pose2d(1.8, 3.5, Rotation2d.fromDegrees(90)),
                 configurationTrajectoire
             );
 
-            var trajectoireReferenceTerrain = trajectoireReferenceRobot
-                .transformBy(odometrie.getPoseMeters().minus(trajectoireReferenceRobot.getInitialPose()));
+            // var robotATerrain = odometrie.getPoseMeters().minus(trajectoireReferenceRobot.getInitialPose());
+            // var trajectoireReferenceTerrain = trajectoireReferenceRobot
+            //     .transformBy(robotATerrain);
+            // cible = cibleRobot.transformBy(robotATerrain);
+            odometrie.setTrajectoire(trajectoireReferenceTerrain);
+
+            var pidGauche = new PIDController(K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI, 0, 0);
+            var pidDroit = new PIDController(K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI, 0, 0);
+            var ramsete = new RamseteController(K_RAMSETE_B, K_RAMSETE_ZETA);
+            ramsete.setEnabled(true);
     
             var ramseteCommand = new RamseteCommand(
                 trajectoireReferenceTerrain,
                 odometrie::getPoseMeters,
-                new RamseteController(K_RAMSETE_B, K_RAMSETE_ZETA),
+                ramsete,
                 feedForward,
                 cinematiqueBase,
                 this::vitesseRouesMetresParSeconde,
-                new PIDController(K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI, 0, 0),
-                new PIDController(K_P_VITESSE_VOLTS_SECONDES_PAR_METRES_WPI, 0, 0),
-                this::appliqueVoltage,
+                pidGauche,
+                pidDroit,
+                (voltGauche, voltDroit) -> {
+                    consigneVitesseGaucheMetresSeconde = pidGauche.getSetpoint();
+                    consigneVitesseDroiteMetresSeconde = pidDroit.getSetpoint();
+                    appliqueVoltage(voltGauche, voltDroit);
+                },
                 this
             );
     
@@ -219,6 +237,14 @@ public final class BaseWestcoast extends SubsystemBase {
             modificateurVitesse = MODIFICATEUR_VITESSE_RAPIDE;
             consigneQuadratique = true;
         });
+    }
+
+    public Command enableCameraEstimate() {
+        return runOnce(odometrie::activeEstimeParCamera);
+    }
+    
+    public Command disableCameraEstimate() {
+        return runOnce(odometrie::desactiveEstimeParCamera);
     }
 
     private Rotation2d rotationRobot() {
@@ -256,10 +282,13 @@ public final class BaseWestcoast extends SubsystemBase {
 
     private DifferentialDriveWheelSpeeds vitesseRouesMetresParSeconde() {
         if (Robot.isReal()) {
-            return new DifferentialDriveWheelSpeeds(
+            var result = new DifferentialDriveWheelSpeeds(
                 transmissionActive.metresParSecondePourVitesse(capteursMoteurGauche.getIntegratedSensorVelocity()),
-                transmissionActive.metresParSecondePourVitesse(capteursMoteurDroit.getIntegratedSensorVelocity())
+                transmissionActive.metresParSecondePourVitesse(-capteursMoteurDroit.getIntegratedSensorVelocity())
             );
+            derniereVitesseGaucheMetresSeconde = result.leftMetersPerSecond;
+            derniereVitesseDroiteMetresSeconde = result.rightMetersPerSecond;
+            return result;
         }
         return new DifferentialDriveWheelSpeeds(
             sim.vitesseMoteurGaucheMetresParSeconde(),
@@ -282,12 +311,11 @@ public final class BaseWestcoast extends SubsystemBase {
 
         builder.addDoubleProperty("positionMoteurGaucheMetres", this::positionMoteurGaucheMetres, null);
         builder.addDoubleProperty("positionMoteurDroitMetres", this::positionMoteurDroitMetres, null);
-        // builder.addDoubleProperty("positionMoteurGaucheCoches", capteursMoteurGauche::getIntegratedSensorPosition, null);
-        // builder.addDoubleProperty("positionMoteurDroitCoches", capteursMoteurDroit::getIntegratedSensorPosition, null);
         builder.addDoubleProperty("angleGyro", () -> rotationRobot().getDegrees(), null);
         builder.addDoubleProperty("ajustementAngleGyro", navx::getAngleAdjustment, null);
-        //builder.addDoubleProperty("rotInit", () -> this.rotationInitiale.getDegrees(), null);
-        builder.addDoubleProperty("voltMotGauche", () -> moteurGauche.getMotorOutputVoltage(), null);
-        // builder.addDoubleProperty("voltMotDroit", () -> moteurDroit.getMotorOutputVoltage(), null);
+        builder.addDoubleProperty("vitMotGaucheMS", () -> derniereVitesseGaucheMetresSeconde, null);
+        builder.addDoubleProperty("vitMotDroitMS", () -> derniereVitesseDroiteMetresSeconde, null);
+        builder.addDoubleProperty("consigneVitGaucheMS", () -> consigneVitesseGaucheMetresSeconde, null);
+        builder.addDoubleProperty("consigneVitGDroitMS", () -> consigneVitesseDroiteMetresSeconde, null);
     }
 }

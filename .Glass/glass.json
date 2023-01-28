@@ -1,0 +1,131 @@
+{
+  "NetworkTables": {
+    "transitory": {
+      "SmartDashboard": {
+        "BaseWestcoast": {
+          "open": true
+        },
+        "Odometrie": {
+          "open": true
+        },
+        "open": true
+      }
+    },
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/SmartDashboard/Field": "Field2d"
+    },
+    "windows": {
+      "/SmartDashboard/Field": {
+        "Robot": {
+          "style": "Line"
+        },
+        "cible": {
+          "arrows": false,
+          "selectable": false,
+          "style": "Line"
+        },
+        "height": 4.400000095367432,
+        "width": 4.5,
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  },
+  "NetworkTables Settings": {
+    "mode": "Client (NT4)",
+    "serverTeam": "3550"
+  },
+  "Plots": {
+    "Plot <0>": {
+      "plots": [
+        {
+          "axis": [
+            {
+              "autoFit": true
+            }
+          ],
+          "height": 425,
+          "legend": false,
+          "name": "Gauche",
+          "series": [
+            {
+              "color": [
+                0.2980392277240753,
+                0.44705885648727417,
+                0.6901960968971252,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/BaseWestcoast/vitMotGaucheMS"
+            },
+            {
+              "color": [
+                0.8666667342185974,
+                0.5176470875740051,
+                0.32156863808631897,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/BaseWestcoast/consigneVitGaucheMS"
+            }
+          ]
+        },
+        {
+          "axis": [
+            {
+              "autoFit": true
+            }
+          ],
+          "height": 425,
+          "legend": false,
+          "name": "Droit",
+          "series": [
+            {
+              "color": [
+                0.2980392277240753,
+                0.44705885648727417,
+                0.6901960968971252,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/BaseWestcoast/vitMotDroitMS"
+            },
+            {
+              "color": [
+                0.8666667342185974,
+                0.5176470875740051,
+                0.32156863808631897,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/BaseWestcoast/consigneVitGDroitMS"
+            }
+          ]
+        }
+      ]
+    },
+    "Plot <1>": {
+      "plots": [
+        {
+          "axis": [
+            {
+              "autoFit": true
+            }
+          ],
+          "height": 465,
+          "legendLocation": 1,
+          "legendOutside": true,
+          "series": [
+            {
+              "color": [
+                0.3333333432674408,
+                0.658823549747467,
+                0.4078431725502014,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/Odometrie/diffDistance"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

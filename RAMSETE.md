@@ -44,6 +44,17 @@ Note: inverser les contrôles des moteurs avec `moteurDroit.setInverted(true)` n
 
 ## Caractérisation
 
+- Comme l'encodeur du moteur droit est à l'envers, bien penser à inverser la valeur de l'encodeur droit lorsque l'on prépare les `DifferentialDriveWheelSpeeds`. Ex:
+
+```java
+    private DifferentialDriveWheelSpeeds vitesseRouesMetresParSeconde() {
+        return new DifferentialDriveWheelSpeeds(
+            transmissionActive.metresParSecondePourVitesse(capteursMoteurGauche.getIntegratedSensorVelocity()),
+            transmissionActive.metresParSecondePourVitesse(-capteursMoteurDroit.getIntegratedSensorVelocity())
+        );
+    } 
+```
+
 - Il est conseillé de faire la caractérisation plusieurs fois, par exemnple 3 fois, au cas où l'une d'entre elle donne des données franchement différentes. On peut prendre les données de la caractérisation avec le meilleur Sim Velocity R2.
 - Il y a un bug lorsque l'on charge un fichier de caractérisation dans Sysid2023: le coefficient Kp pour une boucle fermée sur la vitesse (Velocity) est mauvais tant qu'on ne change pas la liste déroulante "Gain preset" pour "WPILib (2020-)". Bien penser à changer la liste déroulante avant de noter le coéfficient.
 - Utiliser la caractérisation en rotation pour obtenir une mesure fiable de la largeur de la base ("Track width"). En effet, la mesure à la main n'est pas fiable, et est [une cause de soucis avec le controlleur](https://www.chiefdelphi.com/t/ramsete-controller-final-heading-error/374742/10?u=jul).
@@ -52,3 +63,10 @@ Note: inverser les contrôles des moteurs avec `moteurDroit.setInverted(true)` n
 
 - S'assurer de bien configurer les TalonFX avec [un échantillonage rapide](https://www.chiefdelphi.com/t/limiting-voltage-pathweaver-and-ramesetecommand/405377/12?u=jul). En effet, le contrôleur PID est [très sensible au retard des capteurs](https://www.chiefdelphi.com/t/limiting-voltage-pathweaver-and-ramesetecommand/405377/11?u=jul).
 - Déverminage: [calculer et afficher les contributions de chaque gain](https://www.chiefdelphi.com/t/limiting-voltage-pathweaver-and-ramesetecommand/405377/28?u=jul) pour voir lequel pourrait être problématique.
+
+## TODO
+
+Vérifier Odométrie avec Caméra.
+Vérifier suivi avec le nouveau Kp.
+Vérifier qu'il n'y a pas trop de bruit avec 1 échantillon pour l'encodeur TalonFX: https://docs.ctre-phoenix.com/en/stable/ch14_MCSensor.html#velocity-measurement-filter.
+Suivre directions pour débugger le feed forward: https://docs.wpilib.org/en/stable/docs/software/advanced-controls/trajectories/troubleshooting.html

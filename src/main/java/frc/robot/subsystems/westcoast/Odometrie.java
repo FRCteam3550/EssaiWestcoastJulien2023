@@ -16,6 +16,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
@@ -46,6 +47,7 @@ public class Odometrie implements Sendable {
     private Pose2d dernierEstime = new Pose2d();
     private double diffDistance = 0;
     private Timer dernierEstimeCamera = new Timer();
+    private boolean cameraActivee = true;
 
     public Odometrie(
         Rotation2d rotationRobot,
@@ -61,6 +63,8 @@ public class Odometrie implements Sendable {
 
         dernierEstimeCamera.reset();
         dernierEstimeCamera.start();
+
+        setPose("tag", dispositionTerrain.getTagPose(0).get().toPose2d());
     }
 
     // Positive values are going forward 
@@ -70,28 +74,47 @@ public class Odometrie implements Sendable {
             positionMoteurGaucheMetres, 
             positionMoteurDroitMetres
         );
-        var estimeSansCamera = estimateurPositionEtat.getEstimatedPosition();
-        // estimateurPositionCamera.setReferencePose(estimeSansCamera);
 
-        // var optionEstimation = estimateurPositionCamera.update();
-        // if (optionEstimation.isPresent() && optionEstimation.get().estimatedPose != null) {
-        //     var estimation = optionEstimation.get();
-        //     estimateurPositionEtat.addVisionMeasurement(estimation.estimatedPose.toPose2d(), estimation.timestampSeconds);
-            
-        //     dernierEstimeCamera.reset();
-        //     dernierEstimeCamera.start();
-        //     var estimeAvecCamera = estimateurPositionEtat.getEstimatedPosition();
-        //     var diff = estimeAvecCamera.minus(estimeSansCamera);
-        //     diffDistance = Math.sqrt(diff.getX()*diff.getX() + diff.getY()*diff.getY());
-        // }
+        if (cameraActivee) {
+            var estimeSansCamera = estimateurPositionEtat.getEstimatedPosition();
+            estimateurPositionCamera.setReferencePose(estimeSansCamera);
+
+            var optionEstimation = estimateurPositionCamera.update();
+            if (optionEstimation.isPresent() && optionEstimation.get().estimatedPose != null) {
+                var estimation = optionEstimation.get();
+                estimateurPositionEtat.addVisionMeasurement(estimation.estimatedPose.toPose2d(), estimation.timestampSeconds);
+                
+                dernierEstimeCamera.reset();
+                dernierEstimeCamera.start();
+                var estimeAvecCamera = estimateurPositionEtat.getEstimatedPosition();
+                var diff = estimeAvecCamera.minus(estimeSansCamera);
+                diffDistance = Math.sqrt(diff.getX()*diff.getX() + diff.getY()*diff.getY());
+            }
+    }
 
         dernierEstime = estimateurPositionEtat.getEstimatedPosition();
         terrain.setRobotPose(dernierEstime);
-    }
+    }   
 
     public Pose2d getPoseMeters() {
         dernierEstime = estimateurPositionEtat.getEstimatedPosition();
         return dernierEstime;
+    }
+
+    public void activeEstimeParCamera() {
+        cameraActivee = true;
+    }
+    
+    public void desactiveEstimeParCamera() {
+        cameraActivee = false;
+    }
+    
+    public void setPose(String name, Pose2d pos) {
+        terrain.getObject(name).setPose(pos);
+    }
+
+    public void setTrajectoire(Trajectory trajectoire) {
+        terrain.getObject("cible").setTrajectory(trajectoire);
     }
     
     @Override
@@ -102,6 +125,7 @@ public class Odometrie implements Sendable {
         builder.addDoubleProperty("angleDegres", () -> dernierEstime.getRotation().getDegrees(), null);
         builder.addDoubleProperty("diffDistance", () -> this.diffDistance, null);
         builder.addBooleanProperty("positionSecuritaire", () -> this.dernierEstimeCamera.get() < 10, null);
+        builder.addBooleanProperty("cameraActivee", () -> this.cameraActivee, null);
     }
 }
  
