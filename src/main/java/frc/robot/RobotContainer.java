@@ -28,12 +28,12 @@ public class RobotContainer {
   private void configureButtonBindings() {
     boutonBleuXNavigation.onTrue(basePilotable.passeEnModePrecis());
     boutonJauneYNavigation.onTrue(basePilotable.passeEnModeRapide());
-    boutonVertANavigation.onTrue(basePilotable.trajectoireAuto());
+    boutonVertANavigation.onTrue(basePilotable.goToFrontOfTag0());
     boutonRGaucheNavigation.onTrue(basePilotable.enableCameraEstimate());
     boutonRDroitNavigation.onTrue(basePilotable.disableCameraEstimate());
   }
 
   public Command getAutonomousCommand() {
-    return basePilotable.trajectoireAuto();
+    return basePilotable.goToFrontOfTag0();
   }
 }
