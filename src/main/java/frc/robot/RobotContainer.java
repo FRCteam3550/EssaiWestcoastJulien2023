@@ -7,33 +7,33 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
 public class RobotContainer {
-  public static final int MANETTE_NAVIGATION_POSITION_USB = 0;
+  public static final int GAMEPAD_USB_ID = 0;
 
   // Contrôlleurs
-  private final XboxController manetteNavigation = new XboxController(MANETTE_NAVIGATION_POSITION_USB);
+  private final XboxController gamepad = new XboxController(GAMEPAD_USB_ID);
   
-  private final JoystickButton boutonBleuXNavigation = new JoystickButton(manetteNavigation, Button.kX.value);
-  private final JoystickButton boutonJauneYNavigation = new JoystickButton(manetteNavigation, Button.kY.value);
-  private final JoystickButton boutonVertANavigation = new JoystickButton(manetteNavigation, Button.kA.value);
-  private final JoystickButton boutonRGaucheNavigation = new JoystickButton(manetteNavigation, Button.kLeftBumper.value);
-  private final JoystickButton boutonRDroitNavigation = new JoystickButton(manetteNavigation, Button.kRightBumper.value);
+  private final JoystickButton xBlueButton = new JoystickButton(gamepad, Button.kX.value);
+  private final JoystickButton yYellowButton = new JoystickButton(gamepad, Button.kY.value);
+  private final JoystickButton aGreenButton = new JoystickButton(gamepad, Button.kA.value);
+  private final JoystickButton rLeftButton = new JoystickButton(gamepad, Button.kLeftBumper.value);
+  private final JoystickButton rRightButton = new JoystickButton(gamepad, Button.kRightBumper.value);
 
   // Sous systèmes
-  private final BaseWestcoast basePilotable = new BaseWestcoast(manetteNavigation);
+  private final BaseWestcoast driveTrain = new BaseWestcoast(gamepad);
 
   public RobotContainer() {
     configureButtonBindings();
   }
 
   private void configureButtonBindings() {
-    boutonBleuXNavigation.onTrue(basePilotable.passeEnModePrecis());
-    boutonJauneYNavigation.onTrue(basePilotable.passeEnModeRapide());
-    boutonVertANavigation.onTrue(basePilotable.goToFrontOfTag0());
-    boutonRGaucheNavigation.onTrue(basePilotable.enableCameraEstimate());
-    boutonRDroitNavigation.onTrue(basePilotable.disableCameraEstimate());
+    xBlueButton.onTrue(driveTrain.switchToPrecisionDrive());
+    yYellowButton.onTrue(driveTrain.switchToFastDrive());
+    aGreenButton.onTrue(driveTrain.goToFrontOfTag0());
+    rLeftButton.onTrue(driveTrain.enableCameraEstimate());
+    rRightButton.onTrue(driveTrain.disableCameraEstimate());
   }
 
   public Command getAutonomousCommand() {
-    return basePilotable.goToFrontOfTag0();
+    return driveTrain.goToFrontOfTag0();
   }
 }

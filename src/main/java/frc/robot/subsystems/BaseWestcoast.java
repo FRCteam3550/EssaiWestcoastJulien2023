@@ -35,10 +35,10 @@ public final class BaseWestcoast extends SubsystemBase implements Chassis {
     private static final int NO_CAN_MOTEUR_AVANT_GAUCHE = 4;
     private static final int NO_CAN_MOTEUR_AVANT_DROIT = 2;
     
-    private static final double PRECISION_DRIVE_LIMITATION = 0.3;
-    private static final double SPEEDY_DRIVE_LIMITATION = 1.0;
+    private static final double PRECISION_DRIVE_RANGE = 0.3;
+    private static final double FAST_DRIVE_RANGE = 1.0;
 
-    private final Field2d terrain = new Field2d();
+    private final Field2d fieldTracker = new Field2d();
     private final AHRS navx = Navx.newReadyNavx();
     private final WPI_TalonFX leftMotor = new WPI_TalonFX(NO_CAN_MOTEUR_AVANT_GAUCHE);
     private final TalonFXSensorCollection leftMotorSensors = leftMotor.getSensorCollection();
@@ -48,15 +48,15 @@ public final class BaseWestcoast extends SubsystemBase implements Chassis {
     private final Gearing quickGearing = new Gearing(COCHES_ENCODEUR_PAR_ROTATION, 5.13 / 1.0, ChassisId.WHEEL_DIAMETER_M);
     // private final Gearing powerfulGearing = new Gearing(COCHES_ENCODEUR_PAR_ROTATION, 15.0 / 1.0, ChassisId.WHEEL_DIAMETER_M);
     private Gearing activeGearing = quickGearing;
-    private final PathFollowing pathFollowing = new PathFollowing(this, terrain);
+    private final PathFollowing pathFollowing = new PathFollowing(this, fieldTracker);
     private final XboxController gamepad;
 
-    private double speedInputLimitation = PRECISION_DRIVE_LIMITATION;
+    private double speedInputLimitation = PRECISION_DRIVE_RANGE;
     private boolean useQuadraticInputs = false;
     private DifferentialDriveWheelSpeeds lastSpeeds = new DifferentialDriveWheelSpeeds();
 
     private final Simulation sim = new Simulation(leftMotor, rightMotor, () -> activeGearing);
-    private final WestcoastOdometry odometry = new WestcoastOdometry(rotationRobot(), positionMoteurGaucheMetres(), positionMoteurDroitMetres(), pathFollowing.cinematique(), terrain);
+    private final WestcoastOdometry odometry = new WestcoastOdometry(rotationRobot(), positionMoteurGaucheMetres(), positionMoteurDroitMetres(), pathFollowing.cinematique(), fieldTracker);
 
     public BaseWestcoast(XboxController manette) {
         this.gamepad = manette;
@@ -70,7 +70,7 @@ public final class BaseWestcoast extends SubsystemBase implements Chassis {
         rightMotor.configVelocityMeasurementWindow(1);
 
         SmartDashboard.putData(this);
-        SmartDashboard.putData(terrain);
+        SmartDashboard.putData(fieldTracker);
 
         setDefaultCommand(drive());
     }
@@ -116,16 +116,16 @@ public final class BaseWestcoast extends SubsystemBase implements Chassis {
         );
     }
 
-    public Command passeEnModePrecis() {
+    public Command switchToPrecisionDrive() {
         return runOnce(() -> {
-            speedInputLimitation = PRECISION_DRIVE_LIMITATION;
+            speedInputLimitation = PRECISION_DRIVE_RANGE;
             useQuadraticInputs = false;
         });
     }
 
-    public Command passeEnModeRapide() {
+    public Command switchToFastDrive() {
         return runOnce(() -> {
-            speedInputLimitation = SPEEDY_DRIVE_LIMITATION;
+            speedInputLimitation = FAST_DRIVE_RANGE;
             useQuadraticInputs = true;
         });
     }
@@ -167,18 +167,18 @@ public final class BaseWestcoast extends SubsystemBase implements Chassis {
     }
 
     public DifferentialDriveWheelSpeeds wheelSpeedsMS() {
-        DifferentialDriveWheelSpeeds vitesses;
+        DifferentialDriveWheelSpeeds speeds;
         if (Robot.isReal()) {
             // Avancer = vitesses positives, donc il faut inverser la valeur de l'encodeur droit
-            vitesses = new DifferentialDriveWheelSpeeds(
+            speeds = new DifferentialDriveWheelSpeeds(
                 activeGearing.speedMSForSpeedT100MS(leftMotorSensors.getIntegratedSensorVelocity()),
                 activeGearing.speedMSForSpeedT100MS(-rightMotorSensors.getIntegratedSensorVelocity())
             );
         } else {
-            vitesses = sim.wheelSpeedsMS();
+            speeds = sim.wheelSpeedsMS();
         }
-        lastSpeeds = vitesses;
-        return vitesses;
+        lastSpeeds = speeds;
+        return speeds;
 }
 
     /**

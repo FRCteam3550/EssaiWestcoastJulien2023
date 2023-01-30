@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.SPI;
 import frc.robot.Robot;
 
 public class Navx {
+    private static final double EPSILON = 0.0001;
       /*
      * Lorsque nouvellement initialisé, le navx donne un angle de 0 pendant plusieurs cycles de mesures au lieu de la vraie valeur.
      * Or, il faut la vraie valeur pour initialiser l'odométrie. Je n'ai pas trouvé de méthode m'indiquant que l'initialisation est
@@ -15,7 +16,7 @@ public class Navx {
       var navx = new AHRS(SPI.Port.kMXP);
 
       if (Robot.isReal()) {
-          while (Math.abs(navx.getYaw()) < 0.0001) {
+          while (Math.abs(navx.getYaw()) < EPSILON) {
               try {
                   Thread.sleep(20);
               }
