@@ -29,8 +29,8 @@ public class RobotContainer {
     xBlueButton.onTrue(driveTrain.switchToPrecisionDrive());
     yYellowButton.onTrue(driveTrain.switchToFastDrive());
     aGreenButton.onTrue(driveTrain.goToFrontOfTag0());
-    rLeftButton.onTrue(driveTrain.enableCameraEstimate());
-    rRightButton.onTrue(driveTrain.disableCameraEstimate());
+    rLeftButton.onTrue(driveTrain.disableCameraEstimate());
+    rRightButton.onTrue(driveTrain.enableCameraEstimate());
   }
 
   public Command getAutonomousCommand() {

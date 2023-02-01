@@ -26,24 +26,31 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class WestcoastOdometry implements Sendable {
     private static final Pose2d POSITION_DEPART =  new Pose2d(2, 2, Rotation2d.fromDegrees(0));
 
-    private final Field2d fieldTracker;
     //private final AprilTagFieldLayout dispositionTerrain = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
-    private final AprilTagFieldLayout fieldLayout = new AprilTagFieldLayout(
-        List.of(
-            new AprilTag(0, new Pose3d(1.73, 4.4, 0.8, new Rotation3d(0, 0, Math.toRadians(-90))))
-        ),
+    private static final AprilTag TAG0 = new AprilTag(
+        0,
+        new Pose3d(1.73, 4.4, 0.8, new Rotation3d(0, 0, Math.toRadians(-90)))
+    );
+    private static final AprilTag TAG1 = new AprilTag(
+        1,
+        new Pose3d(0.70, 4.4, 0.8, new Rotation3d(0, 0, Math.toRadians(-90)))
+    );
+    private static final AprilTagFieldLayout FIELD_LAYOUT = new AprilTagFieldLayout(
+        List.of(TAG0, TAG1),
         4.5,
         4.4
     );
-    private final Transform3d robotToCamera = new Transform3d(
+    private static final Transform3d ROBOT_TO_CAMERA = new Transform3d(
         new Translation3d(0.523, 0.258 , 0.401),
         new Rotation3d(0,0,0)
     );
+    
+    private final Field2d fieldTracker;
     private final PhotonPoseEstimator cameraPoseEstimator = new PhotonPoseEstimator(
-        fieldLayout,
+        FIELD_LAYOUT,
         PoseStrategy.CLOSEST_TO_REFERENCE_POSE,
         new PhotonCamera("Microsoft_LifeCam_HD-3000"),
-        robotToCamera
+        ROBOT_TO_CAMERA
     );
     private final DifferentialDrivePoseEstimator poseEstimator;
 
@@ -67,7 +74,8 @@ public class WestcoastOdometry implements Sendable {
         lastCameraEstimateTime.start();
 
         this.fieldTracker = fieldTracker;
-        fieldTracker.getObject("tag").setPose(fieldLayout.getTagPose(0).get().toPose2d());
+        fieldTracker.getObject("tag0").setPose(TAG0.pose.toPose2d());
+        fieldTracker.getObject("tag1").setPose(TAG1.pose.toPose2d());
     }
 
     // Positive values are going forward 

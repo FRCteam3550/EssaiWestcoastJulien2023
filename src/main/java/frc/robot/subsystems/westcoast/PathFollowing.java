@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 
 public class PathFollowing {
-    private static final double K_P_VELOCITY_VSM = 0; // Mesurée: 0.68 ou 2.3
+    private static final double K_P_VELOCITY_VSM = 2.3; // Mesurée: 0.68 ou 2.3
 
     private static final double MAX_VELOCITY_MS = 3;
     private static final double MAX_ACCELERATION_MS2 = 0.5;
@@ -60,14 +60,16 @@ public class PathFollowing {
      * @param destination une position du terrain, dans le référentiel du terrain.
      */
     public Command goTo(Pose2d destination) {
-        var fieldRelativeTrajectory = TrajectoryGenerator.generateTrajectory(
-            chassis.odometryEstimation(),  // On part de là où on est
-            List.of(), // Aucun point intermédiaire: on va directement à la destination
-            destination,
-            trajectoryConfig
-        );
+        return chassis.runOnce(() -> {
+            var fieldRelativeTrajectory = TrajectoryGenerator.generateTrajectory(
+                chassis.odometryEstimation(),  // On part de là où on est
+                List.of(), // Aucun point intermédiaire: on va directement à la destination
+                destination,
+                trajectoryConfig
+            );
 
-        return follow(fieldRelativeTrajectory);
+            follow(fieldRelativeTrajectory);
+        });
     }
 
     /**
@@ -76,39 +78,42 @@ public class PathFollowing {
      * @param finalPose Position d'arrivée, toujours dans le référentiel du robot.
      */
     public Command robotRelativeMove(List<Translation2d> points, Pose2d finalPose) {
-        var robotRelativeTrajectory = TrajectoryGenerator.generateTrajectory(
-            ZERO_POSE, // Dans le référentiel du robot, le point de départ, càd là où es le robot, est par définition à (0, 0)
-            points,
-            finalPose,
-            trajectoryConfig
-        );
-        var robotToField = chassis.odometryEstimation().minus(ZERO_POSE);
-        var fieldRelativeTrajectory = robotRelativeTrajectory.transformBy(robotToField);
+        return chassis.runOnce(() -> {
+            var robotRelativeTrajectory = TrajectoryGenerator.generateTrajectory(
+                ZERO_POSE, // Dans le référentiel du robot, le point de départ, càd là où es le robot, est par définition à (0, 0)
+                points,
+                finalPose,
+                trajectoryConfig
+            );
+            var robotToField = chassis.odometryEstimation().minus(ZERO_POSE);
+            var fieldRelativeTrajectory = robotRelativeTrajectory.transformBy(robotToField);
 
-        return follow(fieldRelativeTrajectory);
+            follow(fieldRelativeTrajectory);
+        });
     }
 
-    private Command follow(Trajectory trajectoire) {        
-        return chassis.runOnce(() -> {
-            fieldTracker.getObject("trajectoire").setTrajectory(trajectoire);
-            ramsete.setEnabled(false);
+    private void follow(Trajectory trajectoire) {        
+        fieldTracker.getObject("trajectoire").setTrajectory(trajectoire);
+        ramsete.setEnabled(true);
 
-            var ramseteCommand = new RamseteCommandWithTelemetry(
-                trajectoire,
-                chassis::odometryEstimation,
-                ramsete,
-                feedForward,
-                kinematics,
-                chassis::wheelSpeedsMS,
-                leftVelocityPid,
-                rightVelocityPid,
-                chassis::applyVoltages,
-                chassis
-            );
+        var ramseteCommand = new RamseteCommandWithTelemetry(
+            trajectoire,
+            chassis::odometryEstimation,
+            ramsete,
+            feedForward,
+            kinematics,
+            chassis::wheelSpeedsMS,
+            leftVelocityPid,
+            rightVelocityPid,
+            chassis::applyVoltages,
+            chassis
+        );
 
-            telemetry.observe(ramseteCommand);
+        telemetry.observe(ramseteCommand);
 
-            ramseteCommand.andThen(chassis::stopMotors).schedule();
-        }).withName("trajectoireAuto");
+        ramseteCommand
+            .andThen(chassis::stopMotors)
+            .withName("trajectoireAuto")
+            .schedule();
     }        
 }

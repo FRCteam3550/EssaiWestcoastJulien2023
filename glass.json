@@ -1,0 +1,21 @@
+{
+  "NetworkTables": {
+    "transitory": {
+      "SmartDashboard": {
+        "Field": {
+          "open": true
+        },
+        "Theta Controller": {
+          "open": false
+        },
+        "X Controller": {
+          "open": false
+        },
+        "Y Controller": {
+          "open": false
+        },
+        "open": true
+      }
+    }
+  }
+}

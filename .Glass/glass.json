@@ -5,6 +5,9 @@
         "BaseWestcoast": {
           "open": true
         },
+        "ControlerTelemetry": {
+          "open": true
+        },
         "Odometrie": {
           "open": true
         },
@@ -26,6 +29,10 @@
           "style": "Line"
         },
         "height": 4.400000095367432,
+        "trajectoire": {
+          "arrows": false,
+          "style": "Line"
+        },
         "width": 4.5,
         "window": {
           "visible": true
@@ -44,10 +51,12 @@
           "axis": [
             {
               "autoFit": true
+            },
+            {
+              "autoFit": true
             }
           ],
           "height": 425,
-          "legend": false,
           "name": "Gauche",
           "series": [
             {
@@ -57,7 +66,8 @@
                 0.6901960968971252,
                 1.0
               ],
-              "id": "NT:/SmartDashboard/BaseWestcoast/vitMotGaucheMS"
+              "id": "NT:/SmartDashboard/ControlerTelemetry/leftRefVelocity",
+              "name": "ref"
             },
             {
               "color": [
@@ -66,18 +76,43 @@
                 0.32156863808631897,
                 1.0
               ],
-              "id": "NT:/SmartDashboard/BaseWestcoast/consigneVitGaucheMS"
+              "id": "NT:/SmartDashboard/ControlerTelemetry/leftTargetVelocity",
+              "name": "target"
+            },
+            {
+              "color": [
+                0.3333333432674408,
+                0.658823549747467,
+                0.4078431725502014,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/ControlerTelemetry/leftActualVelocity",
+              "name": "actual"
+            },
+            {
+              "color": [
+                0.7686275243759155,
+                0.30588236451148987,
+                0.32156863808631897,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/ControlerTelemetry/leftOutput",
+              "name": "output",
+              "yAxis": 1
             }
-          ]
+          ],
+          "yaxis2": true
         },
         {
           "axis": [
             {
               "autoFit": true
+            },
+            {
+              "autoFit": true
             }
           ],
           "height": 425,
-          "legend": false,
           "name": "Droit",
           "series": [
             {
@@ -87,7 +122,8 @@
                 0.6901960968971252,
                 1.0
               ],
-              "id": "NT:/SmartDashboard/BaseWestcoast/vitMotDroitMS"
+              "id": "NT:/SmartDashboard/ControlerTelemetry/rightRefVelocity",
+              "name": "ref"
             },
             {
               "color": [
@@ -96,11 +132,37 @@
                 0.32156863808631897,
                 1.0
               ],
-              "id": "NT:/SmartDashboard/BaseWestcoast/consigneVitGDroitMS"
+              "id": "NT:/SmartDashboard/ControlerTelemetry/rightTargetVelocity",
+              "name": "target"
+            },
+            {
+              "color": [
+                0.3333333432674408,
+                0.658823549747467,
+                0.4078431725502014,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/ControlerTelemetry/rightActualVelocity",
+              "name": "actual"
+            },
+            {
+              "color": [
+                0.7686275243759155,
+                0.30588236451148987,
+                0.32156863808631897,
+                1.0
+              ],
+              "id": "NT:/SmartDashboard/ControlerTelemetry/rightOutput",
+              "name": "output",
+              "yAxis": 1
             }
-          ]
+          ],
+          "yaxis2": true
         }
-      ]
+      ],
+      "window": {
+        "name": "Suivi trajectoire"
+      }
     },
     "Plot <1>": {
       "plots": [
@@ -110,22 +172,12 @@
               "autoFit": true
             }
           ],
-          "height": 465,
-          "legendLocation": 1,
-          "legendOutside": true,
-          "series": [
-            {
-              "color": [
-                0.3333333432674408,
-                0.658823549747467,
-                0.4078431725502014,
-                1.0
-              ],
-              "id": "NT:/SmartDashboard/Odometrie/diffDistance"
-            }
-          ]
+          "height": 465
         }
-      ]
+      ],
+      "window": {
+        "name": "Estimation AprilTags"
+      }
     }
   }
 }
